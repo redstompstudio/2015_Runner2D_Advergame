@@ -104,7 +104,6 @@ public class FacebookManager : MonoBehaviour
 				foreach(object o in list)
 				{ 
 					Dictionary<string, object> data = (Dictionary<string, object>)o;
-
 					Debug.Log(string.Format("{0} : {1}", data["permission"], data["status"]));
 				}
 			}

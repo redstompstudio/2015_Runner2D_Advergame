@@ -10,32 +10,18 @@ using System;
 using System.Runtime.Remoting.Messaging;
 
 
-public class App42UserServices : MonoBehaviour 
+public class App42UserServices : Singleton<App42UserServices> 
 {
-	private static App42UserServices instance;
-
 	private ServiceAPI serviceAPI;
 	private UserService userService;
 	private SocialService socialService;
 
 	private UserResponse callBack = new UserResponse ();
 
-	public static App42UserServices Instance {
-		get {
-			if (instance == null)
-				instance = FindObjectOfType (typeof(App42UserServices)) as App42UserServices;
-
-			//if (instance.userService == null || instance.socialService == null)
-			instance.Initialize ();
-
-			return instance;
-		}
-	}
-
 	void Awake()
 	{
-		instance = this;
 		serviceAPI = new ServiceAPI (App42Manager.Instance.API_KEY, App42Manager.Instance.SECRET_KEY);
+		Initialize ();
 	}
 
 	private void Initialize()

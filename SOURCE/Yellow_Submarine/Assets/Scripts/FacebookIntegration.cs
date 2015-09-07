@@ -7,9 +7,22 @@ using com.shephertz.app42.paas.sdk.csharp.user;
 
 public class FacebookIntegration : Singleton<FacebookIntegration> 
 {
+	public bool isConnected;
+
 	public Button FBLoginButton;
 	public Image userProfileImage;
 	public Text userName;
+
+	private struct FBUserInfo
+	{
+		public string userID;
+		public string userFirstName;
+		public string userLastName;
+		public string userEMail;
+		public string userGender;
+		public string userAge;
+	}
+	private FBUserInfo fbUserInfo;
 
 	void Awake()
 	{
@@ -34,8 +47,16 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 
 	public void OnLoginCallback(FBResult pResult)
 	{
-		FacebookManager.Instance.GetProfilePicture (OnProfilePictureCallback);
-		FacebookManager.Instance.GraphAPICall("first_name,gender,email", OnGetUserInfoCallback);
+		if (string.IsNullOrEmpty (pResult.Error)) 
+		{
+			isConnected = true;
+			FacebookManager.Instance.GetProfilePicture (OnProfilePictureCallback);
+			FacebookManager.Instance.GraphAPICall ("first_name,gender,email", OnGetUserInfoCallback);
+		}
+		else
+		{
+			isConnected = false;
+		}
 		//FacebookManager.Instance.CheckUserPermissions ();
 	}
 
@@ -57,18 +78,32 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 		if(userName != null)
 			userName.text = responseObject["first_name"] + " " + responseObject["last_name"];
 
+		fbUserInfo.userFirstName = responseObject ["first_name"].ToString();
+
+		if(responseObject.ContainsKey("last_name"))
+			fbUserInfo.userLastName = responseObject ["last_name"].ToString();
+
+		if (responseObject.ContainsKey ("gender"))
+			fbUserInfo.userGender = responseObject ["gender"].ToString ();
+
 		if (responseObject.ContainsKey ("email"))
-			GetOrCreateUser (responseObject ["email"].ToString (), "111111111", responseObject ["email"].ToString ());
+			fbUserInfo.userEMail = responseObject ["email"].ToString ();
 		else
-			Debug.Log ("Email not found...");
+			fbUserInfo.userEMail = "noinfo@info.com";
+
+		if (responseObject.ContainsKey ("id"))
+		{
+			fbUserInfo.userID = responseObject ["id"].ToString ();
+			GetOrCreateUser (fbUserInfo.userID, fbUserInfo.userID, fbUserInfo.userEMail);
+		}
 	}
 
 	#region GET_USER
 	void GetOrCreateUser(string pUserName, string pPassword, string pEmail)
 	{
 		App42UserServices.Instance.RequestUser(pUserName, 
-			(object pResponse) => LinkUserFacebookAccount (pUserName, FB.AccessToken), 
-			(System.Exception pEx) => CreateUser (pUserName, pPassword, pEmail));
+			(object pResponse) => LinkUserFacebookAccount (pUserName, FB.AccessToken), 	//Found User, link to FB account!
+			(System.Exception pEx) => CreateUser (pUserName, pPassword, pEmail));		//User not found, create a new one!
 	}
 
 	void OnGetUserSuccess(object pResponse)
@@ -109,6 +144,26 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 
 	#endregion
 
+#region RANKING
+
+	public void SaveScore(string pScoreBoardName, double pScore)
+	{
+		if(isConnected)
+			App42LeaderBoardServices.Instance.SaveUserScore (pScoreBoardName, fbUserInfo.userEMail, pScore, OnSaveScoreSuccess, OnSaveScoreException);
+		else
+			Debug.LogError("Can't SaveScore() : user not connected!");
+	}
+
+	public void OnSaveScoreSuccess(object pResponse)
+	{
+		Debug.Log ("Saved Score!");
+	}
+
+	public void OnSaveScoreException(System.Exception pException)
+	{
+		Debug.LogError("SaveScore Exception: " + pException.Message);
+	}
+
 	public void UpdateRanking()
 	{
 		FacebookManager.Instance.GetRanking (OnUpdateRankingCallback);
@@ -122,10 +177,9 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 		{
 			var entry = (Dictionary<string, object>)score;
 			var user = (Dictionary<string, object>)entry["user"];
-
-//			rankingText.text += user["name"] + " : " + entry["score"] + "\n";
 		}
 	}
+#endregion
 
 	public void GetUserLikes()
 	{

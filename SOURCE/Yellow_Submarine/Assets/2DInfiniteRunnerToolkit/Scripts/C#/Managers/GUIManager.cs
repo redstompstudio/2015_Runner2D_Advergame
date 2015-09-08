@@ -27,6 +27,8 @@ public class GUIManager : MonoBehaviour
     public Animator topMenuAnimator;                        //The top menu animator
     public Animator shopAnimator;                           //The shop menu animator
     public Animator missionMenuAnimator;                    //The mission menu animator
+	public Animator rankingMenuAnimator;					//The Ranking Menu animator
+
     public Animator pauseMenuAnimator;                      //The pause menu animator
     public Animator finishMenuAnimator;                     //The finish menu animator
     public Animator[] powerupButtons;                       //The powerup buttons animator (extra speed, shield, sonic wave, revive)
@@ -94,6 +96,18 @@ public class GUIManager : MonoBehaviour
                 //Hide the mission menu
                 missionMenuAnimator.SetBool("ShowMissions", false);
             }
+
+			if(!rankingMenuAnimator.GetBool("ShowRanking"))
+			{
+				overlayAnimator.SetBool("Visible", false);
+				topMenuAnimator.SetBool("MoveDown", false);
+				arrowImage.sprite = arrowSprites[0];
+			}
+			else
+			{
+				//Hide the ranking menu
+				rankingMenuAnimator.SetBool("ShowRanking", false);
+			}
         }
     }
     //Called, when the player clicks on an audio button. Change audio state (enabled, disabled)
@@ -140,6 +154,22 @@ public class GUIManager : MonoBehaviour
             missionPanelElements[i].Find("Status Text").GetComponent<Text>().text = missionStats[i];
         }
     }
+
+	public void ToggleRankingMenu()
+	{
+		//Change mission menu state
+		rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
+
+		//Update mission display
+//		string[] missionTexts = missionManager.GetMissionTexts();
+//		string[] missionStats = missionManager.GetMissionStats();
+//		for (int i = 0; i < 3; i++)
+//		{
+//			missionPanelElements[i].Find("Mission Text").GetComponent<Text>().text = missionTexts[i];
+//			missionPanelElements[i].Find("Status Text").GetComponent<Text>().text = missionStats[i];
+//		}
+	}
+
     //Called, when the player buys an extra speed powerup
     public void BuySpeed(Text priceTag)
     {
@@ -311,7 +341,10 @@ public class GUIManager : MonoBehaviour
             //Hide the main menu
             arrowImage.sprite = arrowSprites[0];
             topMenuAnimator.SetBool("Hide", true);
-            missionMenuAnimator.SetBool("ShowMissions", false);
+            
+			missionMenuAnimator.SetBool("ShowMissions", false);
+			rankingMenuAnimator.SetBool ("ShowRanking", false);
+
             overlayAnimator.SetBool("Visible", false);
 
             //Start the level

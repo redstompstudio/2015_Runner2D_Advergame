@@ -69,6 +69,7 @@ public class GUIManager : MonoBehaviour
         for(int i = 0; i < rankingListParent.childCount; i++)
             rankingItens.Add(rankingListParent.GetChild(i).GetComponent<RankingItemInfos>());
     }
+
     //Called at every frame
     void Update()
     {
@@ -80,11 +81,12 @@ public class GUIManager : MonoBehaviour
             distanceText.text = AddDigitDisplay(distanceTraveled, 5);
         }
     }
+    
     //Called, when the player clicks on the top menu arrow button
     public void ChangeTopMenuState(Image arrowImage)
     {
         //If the top menu is in the default position
-        if (!topMenuAnimator.GetBool("MoveDown"))
+        if (!topMenuAnimator.GetBool("MoveDown")) 
         {
             //Change the button sprite, and move the menu down
             arrowImage.sprite = arrowSprites[1];
@@ -99,6 +101,7 @@ public class GUIManager : MonoBehaviour
                 //Hide the top menu
                 overlayAnimator.SetBool("Visible", false);
                 topMenuAnimator.SetBool("MoveDown", false);
+                rankingMenuAnimator.SetBool("ShowRanking", false);
                 arrowImage.sprite = arrowSprites[0];
             }
             //If the top menu is visible, and the mission menu is visible as well
@@ -112,8 +115,9 @@ public class GUIManager : MonoBehaviour
 			{
 				overlayAnimator.SetBool("Visible", false);
 				topMenuAnimator.SetBool("MoveDown", false);
-				arrowImage.sprite = arrowSprites[0];
-			}
+                missionMenuAnimator.SetBool("ShowMissions", false);
+                arrowImage.sprite = arrowSprites[0];
+            }
 			else
 			{
 				//Hide the ranking menu
@@ -121,6 +125,48 @@ public class GUIManager : MonoBehaviour
 			}
         }
     }
+
+    public void OnMissionsButton()
+    {
+        bool state = missionMenuAnimator.GetBool("ShowMissions");
+
+        if (state)           //If the Ranking menu is open, close it
+        {
+            ShowMissionMenu(false);
+        }
+        else                //Open it and close the others
+        {
+            ShowRankingMenu(false);
+            ShowMissionMenu(true);
+        }
+    }
+
+    private void ShowMissionMenu(bool pState)
+    {
+        missionMenuAnimator.SetBool("ShowMissions", pState);
+    }
+
+    public void OnRankingButton()
+    {
+        Debug.Log("RANKUI BUYGUAG");
+        bool state = rankingMenuAnimator.GetBool("ShowRanking");
+        
+        if(state)           //If the Ranking menu is open, close it
+        {
+            ShowRankingMenu(false);
+        }
+        else                //Open it and close the others
+        {
+            ShowRankingMenu(true);
+            ShowMissionMenu(false);                
+        }
+    }
+
+    private void ShowRankingMenu(bool pState)
+    {
+        rankingMenuAnimator.SetBool("ShowRanking", pState);
+    }
+
     //Called, when the player clicks on an audio button. Change audio state (enabled, disabled)
     public void ChangeAudioState()
     {
@@ -128,6 +174,7 @@ public class GUIManager : MonoBehaviour
         AudioManager.Instance.ChangeAudioState();
         UpdateAudioButtons();
     }
+
     //Called when the player click on a shop button
     public void ToggleShopMenu()
     {
@@ -149,11 +196,13 @@ public class GUIManager : MonoBehaviour
             shopAnimator.SetBool("ShowPanel", true);
         }
     }
+
     //Called when the player click on the top menu's mission button
     public void ToggleMissionMenu()
     {
         //Change mission menu state
-        missionMenuAnimator.SetBool("ShowMissions", !missionMenuAnimator.GetBool("ShowMissions"));
+        //missionMenuAnimator.SetBool("ShowMissions", !missionMenuAnimator.GetBool("ShowMissions"));
+        OnMissionsButton();
 
         //Update mission display
         string[] missionTexts = missionManager.GetMissionTexts();
@@ -168,7 +217,9 @@ public class GUIManager : MonoBehaviour
 
 	public void ToggleRankingMenu()
 	{
-		rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
+        OnRankingButton();
+
+		//rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
         App42LeaderBoardServices.Instance.GetTopNRankers("Level01", 10, OnGetTopNRankersSuccess, OnGetTopNRankersException);
     }
 
@@ -180,15 +231,12 @@ public class GUIManager : MonoBehaviour
 			if(game != null)
 			{
 				Game gameResponse = game;
-
 				IList<Game.Score> scoreList = gameResponse.GetScoreList();
 
 				if(scoreList != null)
 				{
 					for(int i = 0; i < scoreList.Count; i++)
-					{
                         rankingItens[i].SetUserInfos(null, scoreList[i].GetUserName(), scoreList[i].GetValue().ToString());
-                    }
 				}
 			}
 		}

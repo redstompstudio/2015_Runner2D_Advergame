@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
-public class RankingItemInfos : MonoBehaviour {
+public class RankingItemInfos : MonoBehaviour
+{
+    public Image userImage;
+    public Text userName;
+    public Text userScore;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    public void SetUserInfos(Image pImage, string pUserName, string pUserScore)
+    {
+        userImage = pImage;
+        userName.text = pUserName;
+        userScore.text = pUserScore;
+    }
 }

@@ -30,8 +30,7 @@ public class GUIManager : MonoBehaviour
     public Animator topMenuAnimator;                        //The top menu animator
     public Animator shopAnimator;                           //The shop menu animator
     public Animator missionMenuAnimator;                    //The mission menu animator
-	public Animator rankingMenuAnimator;					//The Ranking Menu animator
-
+	
     public Animator pauseMenuAnimator;                      //The pause menu animator
     public Animator finishMenuAnimator;                     //The finish menu animator
     public Animator[] powerupButtons;                       //The powerup buttons animator (extra speed, shield, sonic wave, revive)
@@ -45,6 +44,11 @@ public class GUIManager : MonoBehaviour
     public Image[] shopSubmarineButtons;                    //The shop menu submarine 1 and 2 buttons
     public Image[] audioButtons;                            //The audio buttons
 
+    [Header("RANKING VARS")]
+    public Transform rankingListParent;
+    public Animator rankingMenuAnimator;					//The Ranking Menu animator
+    private List<RankingItemInfos> rankingItens;
+
     //Tells, which mission notification is used at the moment
     private bool[] usedMissionNotifications = new bool[]{false, false, false};
 
@@ -57,9 +61,13 @@ public class GUIManager : MonoBehaviour
     void Start()
     {
         //Updates the audio buttons sprites
-        UpdateAudioButtons();
+        UpdateAudioButtons(); 
 
         hangarDistanceText.text = SaveManager.bestDistance + " M";
+
+        rankingItens = new List<RankingItemInfos>();
+        for(int i = 0; i < rankingListParent.childCount; i++)
+            rankingItens.Add(rankingListParent.GetChild(i).GetComponent<RankingItemInfos>());
     }
     //Called at every frame
     void Update()
@@ -161,9 +169,8 @@ public class GUIManager : MonoBehaviour
 	public void ToggleRankingMenu()
 	{
 		rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
-
-		App42LeaderBoardServices.Instance.GetTopNRankers ("Level01", 10, OnGetTopNRankersSuccess, OnGetTopNRankersException);
-	}
+        App42LeaderBoardServices.Instance.GetTopNRankers("Level01", 10, OnGetTopNRankersSuccess, OnGetTopNRankersException);
+    }
 
 	public void OnGetTopNRankersSuccess(object pResult)
 	{
@@ -180,9 +187,8 @@ public class GUIManager : MonoBehaviour
 				{
 					for(int i = 0; i < scoreList.Count; i++)
 					{
-						Debug.Log(string.Format("Nome: {0} \nScore: {1}", scoreList[i].GetUserName(), 
-							scoreList[i].GetValue()));
-					}
+                        rankingItens[i].SetUserInfos(null, scoreList[i].GetUserName(), scoreList[i].GetValue().ToString());
+                    }
 				}
 			}
 		}

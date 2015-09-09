@@ -33,7 +33,7 @@ public class App42LeaderBoardServices : Singleton<App42LeaderBoardServices>
 		scoreBoardService.GetTopNRankers (pGameName, pMax, response);
 	}
 
-	public void GetTopNRankers(string pGameName, int pMax, string pFBToken,
+	public void GetTopNRankersFromFacebook(string pGameName, int pMax, string pFBToken,
 		App42Response.OnSuccessDelegate pSuccess, App42Response.OnExceptionDelegate pException)
 	{
 		App42Response response = new App42Response (pSuccess, pException);

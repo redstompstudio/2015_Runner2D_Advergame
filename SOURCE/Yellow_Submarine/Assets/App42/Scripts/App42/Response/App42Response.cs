@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using com.shephertz.app42.paas.sdk.csharp;
 using com.shephertz.app42.paas.sdk.csharp.user;
@@ -57,7 +56,7 @@ public class App42Response : App42CallBack
 	}
 	#endregion
 
-	void HandleResultExample(object pResult)
+	private void HandleResultExample(object pResult)
 	{
 		try
 		{

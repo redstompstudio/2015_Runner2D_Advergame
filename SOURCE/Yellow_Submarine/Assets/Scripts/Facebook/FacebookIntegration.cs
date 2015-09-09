@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 using System.Collections.Generic;
 using Facebook.MiniJSON;
 using com.shephertz.app42.paas.sdk.csharp.user;
@@ -21,10 +20,12 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 		public string userEMail;
 		public string userGender;
 		public string userAge;
+
+		public User.Profile profile;
 	}
 	private FBUserInfo fbUserInfo;
 
-	void Awake()
+	private void Awake()
 	{
 		FacebookManager.Instance.Initialize ();
 
@@ -51,7 +52,7 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 		{
 			isConnected = true;
 			FacebookManager.Instance.GetProfilePicture (OnProfilePictureCallback);
-			FacebookManager.Instance.GraphAPICall ("first_name,gender,email", OnGetUserInfoCallback);
+			FacebookManager.Instance.GraphAPICall ("first_name,last_name,gender,email", OnGetUserInfoCallback);
 		}
 		else
 		{
@@ -85,45 +86,62 @@ public class FacebookIntegration : Singleton<FacebookIntegration>
 
 		if (responseObject.ContainsKey ("gender"))
 			fbUserInfo.userGender = responseObject ["gender"].ToString ();
-
-		if (responseObject.ContainsKey ("email"))
-			fbUserInfo.userEMail = responseObject ["email"].ToString ();
-		else
-			fbUserInfo.userEMail = "noinfo@info.com";
-
+		
 		if (responseObject.ContainsKey ("id"))
 		{
 			fbUserInfo.userID = responseObject ["id"].ToString ();
-			GetOrCreateUser (fbUserInfo.userID, fbUserInfo.userID, fbUserInfo.userEMail);
+
+			if (responseObject.ContainsKey ("email"))
+				fbUserInfo.userEMail = responseObject ["email"].ToString ();
+			else
+				fbUserInfo.userEMail = fbUserInfo.userID + "@mail.com";
+			
+			GetOrCreateUser (fbUserInfo.userEMail, fbUserInfo.userID, fbUserInfo.userEMail);
 		}
 	}
 
-	#region GET_USER
+#region GET_USER
 	void GetOrCreateUser(string pUserName, string pPassword, string pEmail)
 	{
 		App42UserServices.Instance.RequestUser(pUserName, 
 			(object pResponse) => LinkUserFacebookAccount (pUserName, FB.AccessToken), 	//Found User, link to FB account!
-			(System.Exception pEx) => CreateUser (pUserName, pPassword, pEmail));		//User not found, create a new one!
+			(System.Exception pEx) => {
+				
+				fbUserInfo.profile = new User.Profile();								//Generate the user App42 Profile
+				fbUserInfo.profile.firstName = fbUserInfo.userFirstName;
+				fbUserInfo.profile.lastName = fbUserInfo.userLastName;	
+				fbUserInfo.profile.SetSex(fbUserInfo.userGender);
+
+				CreateUserWithProfile (pUserName, pPassword, pEmail, fbUserInfo.profile);			//User not found, create a new one!
+			});		
 	}
 
 	void OnGetUserSuccess(object pResponse)
 	{
+		Debug.Log ("User created: Success!");
 	}
 
 	void OnGetUserException(System.Exception pExecption)
 	{
-		Debug.Log ("Something went wrong while getting a user: " + pExecption.ToString());
+		Debug.Log ("GetUser Exception: " + pExecption.Message);
 	}
-	#endregion
+#endregion
 
-	#region CREATE_USER
+#region CREATE_USER
 	void CreateUser(string pUserName, string pPassword, string pEmail)
 	{
 		App42UserServices.Instance.CreateUser (pUserName, pPassword, pEmail, 
 			(object pResponse) => LinkUserFacebookAccount (pUserName, FB.AccessToken), 
-			(System.Exception pEx) => Debug.Log ("Something went wrong while creating a user: " + pEx.ToString ()));
+			(System.Exception pEx) => Debug.Log ("Create User Exception: " + pEx.ToString ()));
 	}
-	#endregion
+
+	void CreateUserWithProfile(string pUserName, string pPassword, string pEmail, User.Profile pProfile)
+	{
+		App42UserServices.Instance.CreateUserWithProfile (pUserName, pPassword, pEmail, pProfile,
+			(object pRespose) => LinkUserFacebookAccount(pUserName, FB.AccessToken),
+			(System.Exception pEx) => Debug.Log("Create With Profile Exception: " + pEx.Message));
+	}
+#endregion	
 
 	#region LINK FACEBOOK ACCOUNT
 	void LinkUserFacebookAccount(string pUserName, string pAccessToken)

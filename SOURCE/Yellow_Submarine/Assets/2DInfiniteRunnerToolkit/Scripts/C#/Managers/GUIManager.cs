@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+using com.shephertz.app42.paas.sdk.csharp;
+using com.shephertz.app42.paas.sdk.csharp.game;
 
 public class GUIManager : MonoBehaviour
 {
@@ -157,17 +160,41 @@ public class GUIManager : MonoBehaviour
 
 	public void ToggleRankingMenu()
 	{
-		//Change mission menu state
 		rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
 
-		//Update mission display
-//		string[] missionTexts = missionManager.GetMissionTexts();
-//		string[] missionStats = missionManager.GetMissionStats();
-//		for (int i = 0; i < 3; i++)
-//		{
-//			missionPanelElements[i].Find("Mission Text").GetComponent<Text>().text = missionTexts[i];
-//			missionPanelElements[i].Find("Status Text").GetComponent<Text>().text = missionStats[i];
-//		}
+		App42LeaderBoardServices.Instance.GetTopNRankers ("Level01", 10, OnGetTopNRankersSuccess, OnGetTopNRankersException);
+	}
+
+	public void OnGetTopNRankersSuccess(object pResult)
+	{
+		try
+		{
+			var game = pResult as Game;
+			if(game != null)
+			{
+				Game gameResponse = game;
+
+				IList<Game.Score> scoreList = gameResponse.GetScoreList();
+
+				if(scoreList != null)
+				{
+					for(int i = 0; i < scoreList.Count; i++)
+					{
+						Debug.Log(string.Format("Nome: {0} \nScore: {1}", scoreList[i].GetUserName(), 
+							scoreList[i].GetValue()));
+					}
+				}
+			}
+		}
+		catch (App42Exception e)
+		{
+			Debug.LogError ("App42Exception : "+ e);
+		}
+	}
+
+	public void OnGetTopNRankersException(System.Exception pException)
+	{
+		Debug.Log (pException.Message);
 	}
 
     //Called, when the player buys an extra speed powerup

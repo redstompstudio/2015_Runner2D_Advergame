@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+using com.shephertz.app42.paas.sdk.csharp;
+using com.shephertz.app42.paas.sdk.csharp.game;
 
 public class GUIManager : MonoBehaviour
 {
@@ -27,6 +30,7 @@ public class GUIManager : MonoBehaviour
     public Animator topMenuAnimator;                        //The top menu animator
     public Animator shopAnimator;                           //The shop menu animator
     public Animator missionMenuAnimator;                    //The mission menu animator
+	
     public Animator pauseMenuAnimator;                      //The pause menu animator
     public Animator finishMenuAnimator;                     //The finish menu animator
     public Animator[] powerupButtons;                       //The powerup buttons animator (extra speed, shield, sonic wave, revive)
@@ -40,6 +44,11 @@ public class GUIManager : MonoBehaviour
     public Image[] shopSubmarineButtons;                    //The shop menu submarine 1 and 2 buttons
     public Image[] audioButtons;                            //The audio buttons
 
+    [Header("RANKING VARS")]
+    public Transform rankingListParent;
+    public Animator rankingMenuAnimator;					//The Ranking Menu animator
+    private List<RankingItemInfos> rankingItens;
+
     //Tells, which mission notification is used at the moment
     private bool[] usedMissionNotifications = new bool[]{false, false, false};
 
@@ -52,9 +61,13 @@ public class GUIManager : MonoBehaviour
     void Start()
     {
         //Updates the audio buttons sprites
-        UpdateAudioButtons();
+        UpdateAudioButtons(); 
 
         hangarDistanceText.text = SaveManager.bestDistance + " M";
+
+        rankingItens = new List<RankingItemInfos>();
+        for(int i = 0; i < rankingListParent.childCount; i++)
+            rankingItens.Add(rankingListParent.GetChild(i).GetComponent<RankingItemInfos>());
     }
     //Called at every frame
     void Update()
@@ -94,6 +107,18 @@ public class GUIManager : MonoBehaviour
                 //Hide the mission menu
                 missionMenuAnimator.SetBool("ShowMissions", false);
             }
+
+			if(!rankingMenuAnimator.GetBool("ShowRanking"))
+			{
+				overlayAnimator.SetBool("Visible", false);
+				topMenuAnimator.SetBool("MoveDown", false);
+				arrowImage.sprite = arrowSprites[0];
+			}
+			else
+			{
+				//Hide the ranking menu
+				rankingMenuAnimator.SetBool("ShowRanking", false);
+			}
         }
     }
     //Called, when the player clicks on an audio button. Change audio state (enabled, disabled)
@@ -140,6 +165,44 @@ public class GUIManager : MonoBehaviour
             missionPanelElements[i].Find("Status Text").GetComponent<Text>().text = missionStats[i];
         }
     }
+
+	public void ToggleRankingMenu()
+	{
+		rankingMenuAnimator.SetBool("ShowRanking", !rankingMenuAnimator.GetBool("ShowRanking"));
+        App42LeaderBoardServices.Instance.GetTopNRankers("Level01", 10, OnGetTopNRankersSuccess, OnGetTopNRankersException);
+    }
+
+	public void OnGetTopNRankersSuccess(object pResult)
+	{
+		try
+		{
+			var game = pResult as Game;
+			if(game != null)
+			{
+				Game gameResponse = game;
+
+				IList<Game.Score> scoreList = gameResponse.GetScoreList();
+
+				if(scoreList != null)
+				{
+					for(int i = 0; i < scoreList.Count; i++)
+					{
+                        rankingItens[i].SetUserInfos(null, scoreList[i].GetUserName(), scoreList[i].GetValue().ToString());
+                    }
+				}
+			}
+		}
+		catch (App42Exception e)
+		{
+			Debug.LogError ("App42Exception : "+ e);
+		}
+	}
+
+	public void OnGetTopNRankersException(System.Exception pException)
+	{
+		Debug.Log (pException.Message);
+	}
+
     //Called, when the player buys an extra speed powerup
     public void BuySpeed(Text priceTag)
     {
@@ -311,7 +374,10 @@ public class GUIManager : MonoBehaviour
             //Hide the main menu
             arrowImage.sprite = arrowSprites[0];
             topMenuAnimator.SetBool("Hide", true);
-            missionMenuAnimator.SetBool("ShowMissions", false);
+            
+			missionMenuAnimator.SetBool("ShowMissions", false);
+			rankingMenuAnimator.SetBool ("ShowRanking", false);
+
             overlayAnimator.SetBool("Visible", false);
 
             //Start the level

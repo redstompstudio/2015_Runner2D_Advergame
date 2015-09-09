@@ -85,7 +85,13 @@ public class AudioManager : MonoBehaviour
         if (coinCollectedClip && audioEnabled)
         {
             effectPlayer.clip = coinCollectedClip;
+
+			float curPitch = effectPlayer.pitch;
+			effectPlayer.pitch = 1 - Random.Range (-0.1f, 0.1f);
+
             effectPlayer.Play();
+
+			effectPlayer.pitch = curPitch;
         }
     }
     public void PlayExplosion()

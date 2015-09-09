@@ -11,6 +11,9 @@ public class LevelManager : MonoBehaviour
 
     private int collectedCoins;                         //Hold the current collected coin ammount
 
+	public bool resetBestDistance;
+	public bool resetCoins;
+
     //Used for initialisation
     void Start()
     {
@@ -23,6 +26,12 @@ public class LevelManager : MonoBehaviour
         SaveManager.LoadMissionData();
 
         missionManager.LoadData();
+
+		if (resetBestDistance)
+			SaveManager.bestDistance = 0;
+
+		if(resetCoins)
+			SaveManager.coinAmmount = 0;
     }
 
     //Called when a coin is collected by the player
@@ -115,8 +124,11 @@ public class LevelManager : MonoBehaviour
     //Saves the best distance, and the collected coins
     private void SaveStats()
     {
-        if (SaveManager.bestDistance < levelGenerator.CurrentDistance())
-            SaveManager.bestDistance = levelGenerator.CurrentDistance();
+		if (SaveManager.bestDistance < levelGenerator.CurrentDistance ()) 
+		{
+			SaveManager.bestDistance = levelGenerator.CurrentDistance ();
+			FacebookIntegration.Instance.SaveScore("Level01", SaveManager.bestDistance);
+		}
 
         SaveManager.coinAmmount += collectedCoins;
         SaveManager.SaveData();

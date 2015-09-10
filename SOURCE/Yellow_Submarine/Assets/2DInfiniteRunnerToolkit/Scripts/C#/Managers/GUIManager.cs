@@ -148,7 +148,6 @@ public class GUIManager : MonoBehaviour
 
     public void OnRankingButton()
     {
-        Debug.Log("RANKUI BUYGUAG");
         bool state = rankingMenuAnimator.GetBool("ShowRanking");
         
         if(state)           //If the Ranking menu is open, close it

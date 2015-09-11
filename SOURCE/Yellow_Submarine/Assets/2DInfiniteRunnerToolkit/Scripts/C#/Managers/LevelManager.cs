@@ -111,6 +111,8 @@ public class LevelManager : MonoBehaviour
     //Called when the level has ended
     public void LevelEnded()
     {
+        AdsManager.Instance.ShowAd();
+
         SaveStats();
         missionManager.SaveData();
         missionManager.LoadData();
